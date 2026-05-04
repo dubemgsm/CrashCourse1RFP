@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Political Violence Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e74c3c;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+        }
+
+        .header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .header a:hover {
+            opacity: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* Summary Cards */
+        .card-stat {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .card-stat h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #7f8c8d;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-stat .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Charts & Map */
+        .card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .col-span-2 { grid-column: span 2; }
+        .col-span-3 { grid-column: span 3; }
+        .col-span-4 { grid-column: span 4; }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        select {
+            padding: 0.5rem;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .col-span-2, .col-span-3, .col-span-4 { grid-column: span 2; }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .col-span-2, .col-span-3, .col-span-4 { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>🇳🇬 Nigeria Political Violence Dashboard</h1>
+        <div class="controls">
+            <select id="yearFilter">
+                <option value="All">All Years</option>
+            </select>
+            <a href="index.html">← Back to Home</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Summary Stats -->
+        <div class="card-stat">
+            <h3>Total Events</h3>
+            <div id="stat-events" class="value">0</div>
+        </div>
+        <div class="card-stat">
+            <h3>Total Fatalities</h3>
+            <div id="stat-fatalities" class="value">0</div>
+        </div>
+        <div class="card-stat">
+            <h3>Most Affected State</h3>
+            <div id="stat-top-state" class="value">-</div>
+        </div>
+        <div class="card-stat">
+            <h3>Avg. Fatalities/Event</h3>
+            <div id="stat-avg" class="value">0</div>
+        </div>
+
+        <!-- Map -->
+        <div class="card col-span-2">
+            <h2>Geographic Distribution (Admin1)</h2>
+            <div id="map"></div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="card col-span-2">
+            <h2>Top 10 States by Fatalities</h2>
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="card col-span-4">
+            <h2>Temporal Trends (Events & Fatalities)</h2>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="lineChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const nigeriaRegions = {
+            'Abia': [5.45, 7.37], 'Adamawa': [9.20, 13.30], 'Akwa Ibom': [4.32, 8.15],
+            'Anambra': [6.49, 7.00], 'Bauchi': [10.31, 11.50], 'Bayelsa': [4.75, 6.26],
+            'Benue': [7.48, 8.73], 'Borno': [11.50, 13.15], 'Cross River': [5.95, 8.85],
+            'Delta': [5.74, 5.73], 'Ebonyi': [6.35, 8.12], 'Edo': [6.56, 5.75],
+            'Ekiti': [7.62, 5.22], 'Enugu': [6.43, 7.51], 'FCT': [9.05, 7.54],
+            'Gombe': [10.29, 11.17], 'Imo': [5.48, 7.03], 'Jigawa': [12.00, 9.25],
+            'Kaduna': [10.52, 7.44], 'Kano': [11.99, 8.51], 'Katsina': [12.99, 7.61],
+            'Kebbi': [12.44, 4.20], 'Kogi': [7.49, 6.73], 'Kwara': [8.80, 4.59],
+            'Lagos': [6.57, 3.35], 'Nasarawa': [8.90, 8.98], 'Niger': [9.17, 6.27],
+            'Ogun': [6.67, 3.35], 'Ondo': [7.25, 5.23], 'Osun': [7.78, 4.56],
+            'Oyo': [8.00, 3.94], 'Plateau': [9.30, 9.77], 'Rivers': [4.70, 7.52],
+            'Sokoto': [13.00, 5.25], 'Taraba': [7.91, 11.27], 'Yobe': [11.88, 11.50],
+            'Zamfara': [12.80, 6.27]
+        };
+
+        let map, barChart, lineChart;
+        let markers = [];
+        let allData = [];
+
+        function initMap() {
+            map = L.map('map').setView([9.08, 8.67], 5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+        }
+
+        function updateDashboard(year) {
+            const filtered = year === 'All' ? allData : allData.filter(d => d.Year === year);
+            
+            // 1. Aggregates
+            let totalEvents = 0, totalFatalities = 0;
+            const stateData = {};
+            const yearlyData = {};
+
+            filtered.forEach(d => {
+                const e = parseInt(d.Events) || 0;
+                const f = parseInt(d.Fatalities) || 0;
+                totalEvents += e;
+                totalFatalities += f;
+
+                // State aggregation
+                if (!stateData[d.Admin1]) stateData[d.Admin1] = { events: 0, fatalities: 0 };
+                stateData[d.Admin1].events += e;
+                stateData[d.Admin1].fatalities += f;
+
+                // Yearly trend aggregation
+                if (!yearlyData[d.Year]) yearlyData[d.Year] = { events: 0, fatalities: 0 };
+                yearlyData[d.Year].events += e;
+                yearlyData[d.Year].fatalities += f;
+            });
+
+            // Update stats
+            document.getElementById('stat-events').textContent = totalEvents.toLocaleString();
+            document.getElementById('stat-fatalities').textContent = totalFatalities.toLocaleString();
+            document.getElementById('stat-avg').textContent = totalEvents > 0 ? (totalFatalities / totalEvents).toFixed(2) : 0;
+            
+            const sortedStates = Object.entries(stateData).sort((a,b) => b[1].fatalities - a[1].fatalities);
+            document.getElementById('stat-top-state').textContent = sortedStates.length > 0 ? sortedStates[0][0] : '-';
+
+            // 2. Update Map
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            Object.entries(stateData).forEach(([state, data]) => {
+                if (nigeriaRegions[state]) {
+                    const radius = Math.sqrt(data.fatalities) / 2 + 5;
+                    const m = L.circleMarker(nigeriaRegions[state], {
+                        radius: Math.min(radius, 30),
+                        fillColor: '#e74c3c',
+                        color: '#c0392b',
+                        weight: 1,
+                        fillOpacity: 0.6
+                    }).addTo(map);
+                    m.bindPopup(`<strong>${state}</strong><br>Events: ${data.events}<br>Fatalities: ${data.fatalities}`);
+                    markers.push(m);
+                }
+            });
+
+            // 3. Update Bar Chart (Top 10)
+            const top10 = sortedStates.slice(0, 10);
+            const barLabels = top10.map(s => s[0]);
+            const barValues = top10.map(s => s[1].fatalities);
+
+            if (barChart) barChart.destroy();
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: 'Fatalities',
+                        data: barValues,
+                        backgroundColor: '#3498db'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // 4. Update Line Chart
+            const years = Object.keys(yearlyData).sort();
+            if (lineChart) lineChart.destroy();
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: years,
+                    datasets: [
+                        {
+                            label: 'Events',
+                            data: years.map(y => yearlyData[y].events),
+                            borderColor: '#2ecc71',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Fatalities',
+                            data: years.map(y => yearlyData[y].fatalities),
+                            borderColor: '#e74c3c',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Load Data
+        initMap();
+        fetch('Nigeria_HRP_political_violence.csv')
+            .then(res => res.text())
+            .then(csv => {
+                const results = Papa.parse(csv, { header: true });
+                allData = results.data.filter(d => d.Admin1);
+                
+                // Populate years
+                const years = [...new Set(allData.map(d => d.Year))].sort((a,b) => b-a);
+                const select = document.getElementById('yearFilter');
+                years.forEach(y => {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    select.appendChild(opt);
+                });
+
+                select.addEventListener('change', (e) => updateDashboard(e.target.value));
+                updateDashboard('All');
+            });
+    </script>
+</body>
+</html>
