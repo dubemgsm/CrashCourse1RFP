@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Conflict & Schools Maps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 40px;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        .maps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        .map-card {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+        }
+        .map-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            transform: translateY(-5px);
+        }
+        .map-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        .map-card p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        .btn:hover {
+            background: #764ba2;
+        }
+        .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .features {
+            margin-top: 30px;
+            text-align: left;
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .features ul {
+            list-style-position: inside;
+            color: #666;
+            line-height: 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Nigeria Conflict & Schools Maps</h1>
+        <p class="subtitle">Interactive visualization of political violence events, fatalities, and school locations</p>
+        
+        <div class="maps-grid">
+            <a href="dashboard.html" class="map-card" style="border-color: #e74c3c;">
+                <div class="icon">📊</div>
+                <h2>National Analytics Dashboard</h2>
+                <p>Comprehensive interactive dashboard with charts, trends, and geographic analysis of political violence</p>
+                <div class="btn" style="background: #e74c3c;">View Dashboard</div>
+                <div class="features">
+                    <ul>
+                        <li>Interactive Charts & Trends</li>
+                        <li>Summary Statistics</li>
+                        <li>Yearly Comparisons</li>
+                    </ul>
+                </div>
+            </a>
+
+            <a href="politicalviolence.html" class="map-card">
+                <div class="icon">🇳🇬</div>
+                <h2>National Overview Map</h2>
+                <p>Political violence events and fatalities across all Nigeria states (Legacy Map)</p>
+                <div class="btn">View Map</div>
+                <div class="features">
+                    <ul>
+                        <li>Filter by year (1997-Present)</li>
+                        <li>Toggle Events/Fatalities</li>
+                        <li>All 36 states covered</li>
+                    </ul>
+                </div>
+            </a>
+            
+            <a href="borno_schools.html" class="map-card">
+                <div class="icon">🏫</div>
+                <h2>Borno Schools & Violence</h2>
+                <p>Schools and political violence overlay map focused on Borno state</p>
+                <div class="btn">View Borno Map</div>
+                <div class="features">
+                    <ul>
+                        <li>Violence events and fatalities by LGA</li>
+                        <li>School locations and status</li>
+                        <li>Open vs Closed schools</li>
+                    </ul>
+                </div>
+            </a>
+        </div>
+        
+        <div class="features" style="margin-top: 40px; text-align: center;">
+            <h3>Data Sources</h3>
+            <p>Political Violence: Nigeria HRP Data | Schools: North East Schools Dataset</p>
+        </div>
+    </div>
+</body>
+</html>
